@@ -56,3 +56,6 @@ Projects are saved as `.crc.json` files. Each file contains all threads, chunks,
 | `constants.py` | Tag/relation definitions, colors, protocol templates |
 | `utils.py` | Parsing and reference utilities |
 | `dialogs.py` | Import and relation-edit dialog windows |
+
+
+Josslyn is super awesome
