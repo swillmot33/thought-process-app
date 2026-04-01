@@ -47,7 +47,7 @@ RELATION_COLORS = {
     "refers-back": "#7a46b5",
 }
 
-PROTOCOL_SUMMARY = """Protocol (v159)
+PROTOCOL_SUMMARY = """Protocol (v160)
 
 Tags
 - flag
@@ -60,9 +60,15 @@ Tags
 - shift
 
 Tag modes
-- live
-- review
-- ai
+- live    (inline during conversation: #tag added in the message itself)
+- review  (added manually in the app after import)
+- ai      (proposed by AI in consolidate output, applied in app)
+
+Tagging layers
+- Most tagging comes from AI (layer: ai) in the consolidate output
+- Some inline tagging happens live during conversation (layer: live)
+- Light manual cleanup happens in the app (layer: review)
+- Goal: eventually every line has a tag or is part of a relation
 
 Commands
 - consolidate
@@ -78,7 +84,8 @@ Reference format
 - Line range: C#:L#-L#
 
 Design Rules
-- Preserve transcript as closely as possible to actual discussion
+- The verbatim transcript is the primary output — reproduce as close to word-for-word as possible
+- Summaries and interpretations are derived from the transcript, not a replacement for it
 - Chunk transcripts as finely as practical
 - Keep ideas modular
 - Make relations between ideas explicit
@@ -88,7 +95,6 @@ Design Rules
 - Live conversation happens here
 - Prioritize capturing triggers and flow over completeness
 - If uncertain, mark uncertainty rather than invent structure
-- Include a verbatim transcript window for the current consolidated span whenever practical
 """
 
 CONSOLIDATE_TEMPLATE = """=== CONSOLIDATE START ===
@@ -96,31 +102,35 @@ THREAD: <thread name or working title>
 SPAN: since last consolidate
 CHUNK ID: C<next_chunk_number>
 
-TRANSCRIPT CHUNK
+VERBATIM TRANSCRIPT
+(reproduce as close to word-for-word as possible — this is the primary record)
 [L1] You: ...
 [L2] AI: ...
 [L3] You: ...
 [L4] AI: ...
-
-VERBATIM TRANSCRIPT WINDOW
-- C<chunk_id>:L1-L<end_line>
-- preserve exact wording for the current chunk / most recent span as closely as practical
+(continue for all lines in this span)
 
 KEY TERMS / DEFINITIONS
 - term: concise definition
-- term: concise definition
 
-TAGGED ITEMS
-- [flag] C#:L#-L#
-- [key phrasing] C#:L#
-- [trigger] C#:L# -> C#:L# (if known)
-- [interesting] C#:L#
-- [not relevant] C#:L#
-- [split] C#:L#
+PROPOSED TAGS  (layer: ai — to be applied in app)
+- [flag]        C#:L# — reason
+- [key phrasing] C#:L# — exact phrase
+- [trigger]     C#:L# -> C#:L# — what triggered what
+- [interesting] C#:L# — reason
+- [not relevant] C#:L# — reason
+- [split]       C#:L# — branch description
+- [concept]     C#:L# — concept name
+- [shift]       C#:L# — description of shift
 
-KEY PHRASING
-- C#:L# — exact wording
-- C#:L#-L# — exact wording
+PROPOSED RELATIONS  (layer: ai — to be applied in app)
+- C#:L# --rephrase--> C#:L#
+- C#:L# --example--> C#:L#
+- C#:L# --subconcept--> C#:L#
+- C#:L# --continues--> C#:L#
+- C#:L# --supports--> C#:L#
+- C#:L# --split-from--> C#:L#
+- C#:L# --refers-back--> C#:L#
 
 TRIGGERS
 - C#:L# — source phrase / idea
@@ -136,32 +146,9 @@ RESUME POINTS
 
 OPEN QUESTIONS
 - ...
-- ...
-
-MODULAR KEY IDEAS
-- Idea A
-  - supported by: C#:L#-L#
-  - why it matters
-  - how it relates to other ideas
-- Idea B
-  - supported by: C#:L#-L#
-  - why it matters
-  - how it relates to other ideas
-
-RELATIONS
-- Idea A <-> Idea B
-  - relation type: support / contrast / reinterpretation / dependency
-  - supported by: C#:L#-L#
-
-PROPOSED TAGS
-- [flag] C#:L#-L# — ...
-- [key phrasing] C#:L# — ...
-- [trigger] C#:L# — ...
-- [split] C#:L# — ...
 
 FACTS
 - term: definition / theorem / reference
-- ...
 
 AI INTERPRETATION
 - (high confidence) ...
@@ -184,36 +171,39 @@ THREAD: <thread name>
 SPAN: since last final consolidate
 CHUNK ID: C<next_chunk_number>
 
-TRANSCRIPT CHUNK
+VERBATIM TRANSCRIPT
+(reproduce the full span as close to word-for-word as possible — primary record)
 [L1] You: ...
 [L2] AI: ...
 [L3] You: ...
 [L4] AI: ...
-...
-
-VERBATIM TRANSCRIPT WINDOWS
-- C<chunk_id>:L1-L<end_line>
-- preserve the most recent or most important spans exactly when practical
+(continue for all lines in this span)
 
 TRUNCATED DISCUSSION OUTPUT
-- compressed, readable version of the discussion
-- references should still use chunk line numbers where possible
+(compressed readable version for reference — comes after verbatim, not instead of it)
+- ...
 
 KEY TERMS / DEFINITIONS
-- ...
-- ...
+- term: definition
 
-TAGGED ITEMS
-- [flag] C#:L#-L#
-- [key phrasing] C#:L#
-- [trigger] C#:L# -> C#:L# (if known)
-- [interesting] C#:L#
-- [not relevant] C#:L#
-- [split] C#:L#
+PROPOSED TAGS  (layer: ai — to be applied in app)
+- [flag]         C#:L# — reason
+- [key phrasing] C#:L# — exact phrase
+- [trigger]      C#:L# -> C#:L# — what triggered what
+- [interesting]  C#:L# — reason
+- [not relevant] C#:L# — reason
+- [split]        C#:L# — branch description
+- [concept]      C#:L# — concept name
+- [shift]        C#:L# — description of shift
 
-KEY PHRASING
-- C#:L# — exact text
-- C#:L#-L# — exact text
+PROPOSED RELATIONS  (layer: ai — to be applied in app)
+- C#:L# --rephrase--> C#:L#
+- C#:L# --example--> C#:L#
+- C#:L# --subconcept--> C#:L#
+- C#:L# --continues--> C#:L#
+- C#:L# --supports--> C#:L#
+- C#:L# --split-from--> C#:L#
+- C#:L# --refers-back--> C#:L#
 
 TRIGGERS
 - C#:L# — source
@@ -229,26 +219,15 @@ RESUME POINTS
 
 OPEN QUESTIONS
 - ...
-- ...
 
 BEST WRITE-UP OF KEY IDEAS
 - Idea A
   - supporting lines: C#:L#-L#
   - explanation
   - relation to other ideas
-- Idea B
-  - supporting lines: C#:L#-L#
-  - explanation
-  - relation to other ideas
-
-RELATIONS
-- Idea A <-> Idea B
-  - relation type
-  - supported by: C#:L#-L#
 
 FACTS
 - term: definition / theorem / reference
-- ...
 
 AI INTERPRETATION
 - (high confidence) ...
@@ -269,7 +248,6 @@ NOTES MARKDOWN
 - organized by tags/context
 
 INDEX TERMS
-- ...
 - ...
 
 === FINAL CONSOLIDATE END ===
